@@ -6,22 +6,62 @@ namespace AutoStardew;
 
 /// <summary>
 /// Minimal wrapper around an OpenAI-compatible chat completion API.
-/// The base URL and API key are taken from <c>OPENAI_API_BASE</c> and
-/// <c>OPENAI_API_KEY</c> environment variables.
+///
+/// The endpoint, API key and model can be configured at runtime. If no
+/// values are supplied the constructor falls back to environment
+/// variables (<c>OPENAI_API_BASE</c>, <c>OPENAI_API_KEY</c> and
+/// <c>OPENAI_MODEL</c>).
 /// </summary>
 public class AiPlanner
 {
     private readonly HttpClient _client;
 
+    /// <summary>Base URL for the chat completion API.</summary>
+    public string ApiBase { get; private set; }
+
+    /// <summary>Bearer token used for authentication.</summary>
+    public string ApiKey { get; private set; }
+
+    /// <summary>Model identifier sent in the request body.</summary>
+    public string Model { get; private set; }
+
     public AiPlanner(HttpClient? client = null)
     {
         _client = client ?? new HttpClient();
-        var baseUrl = Environment.GetEnvironmentVariable("OPENAI_API_BASE") ?? "https://api.openai.com";
-        _client.BaseAddress = new Uri(baseUrl);
 
-        var apiKey = Environment.GetEnvironmentVariable("OPENAI_API_KEY");
-        if (!string.IsNullOrEmpty(apiKey))
-            _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);
+        ApiBase = Environment.GetEnvironmentVariable("OPENAI_API_BASE") ?? "https://api.openai.com";
+        _client.BaseAddress = new Uri(ApiBase);
+
+        ApiKey = Environment.GetEnvironmentVariable("OPENAI_API_KEY") ?? string.Empty;
+        if (!string.IsNullOrEmpty(ApiKey))
+            _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", ApiKey);
+
+        Model = Environment.GetEnvironmentVariable("OPENAI_MODEL") ?? "gpt-3.5-turbo";
+    }
+
+    /// <summary>
+    /// Update authentication or endpoint information at runtime. Any
+    /// parameter left <c>null</c> retains its current value.
+    /// </summary>
+    public void Configure(string? apiBase = null, string? apiKey = null, string? model = null)
+    {
+        if (!string.IsNullOrWhiteSpace(apiBase) && apiBase != ApiBase)
+        {
+            ApiBase = apiBase;
+            _client.BaseAddress = new Uri(ApiBase);
+        }
+
+        if (apiKey is not null && apiKey != ApiKey)
+        {
+            ApiKey = apiKey;
+            if (string.IsNullOrEmpty(ApiKey))
+                _client.DefaultRequestHeaders.Authorization = null;
+            else
+                _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", ApiKey);
+        }
+
+        if (!string.IsNullOrWhiteSpace(model))
+            Model = model;
     }
 
     /// <summary>
@@ -31,7 +71,7 @@ public class AiPlanner
     {
         var request = new
         {
-            model = Environment.GetEnvironmentVariable("OPENAI_MODEL") ?? "gpt-3.5-turbo",
+            model = Model,
             messages = new[] { new { role = "user", content = prompt } }
         };
 

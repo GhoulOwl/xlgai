@@ -60,3 +60,6 @@ obj/
 
 **/bin/
 **/obj/
+
+# Mod output
+Mods/

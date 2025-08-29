@@ -1,0 +1,8 @@
+{
+  "Name": "AutoStardew",
+  "Author": "your-name",
+  "Version": "0.1.0",
+  "Description": "AI-driven automation MVP",
+  "UniqueID": "yourname.AutoStardew",
+  "EntryDll": "AutoStardew.dll"
+}

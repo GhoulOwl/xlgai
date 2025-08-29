@@ -13,4 +13,8 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../StardewModdingAPI/StardewModdingAPI.csproj" Private="false" />
+  </ItemGroup>
 </Project>

@@ -1,5 +1,6 @@
 using AutoStardew.Blackboard;
 using AutoStardew.Tasks;
+using AutoStardew.UI;
 
 namespace AutoStardew;
 
@@ -8,10 +9,19 @@ namespace AutoStardew;
 /// would derive from <c>Mod</c> and hook into game events.
 /// </summary>
 public class ModEntry
-{
+{ 
+    private readonly ModConfig _config = new();
     private readonly AiPlanner _planner = new();
     private readonly TaskQueue _scheduler = new();
     private readonly Blackboard.Blackboard _blackboard = new();
+    private readonly ModGui _gui;
+
+    public ModEntry()
+    {
+        _gui = new ModGui(_config);
+        // Apply configuration to planner at startup
+        _planner.Configure(_config.ApiEndpoint, _config.ApiKey, _config.Model);
+    }
 
     /// <summary>
     /// Builds a very naive daily plan using the AI planner. The prompt is intentionally
@@ -53,4 +63,17 @@ public class ModEntry
     /// Runs queued tasks against the provided game state snapshot.
     /// </summary>
     public void Run(GameState state) => _scheduler.Execute(state);
+
+    /// <summary>
+    /// Called every update tick with the currently pressed keys. When the
+    /// user presses O and P together the configuration menu is toggled.
+    /// </summary>
+    public void OnUpdate(InputState input)
+    {
+        if (input.IsPressed(Keys.O | Keys.P))
+            _gui.Toggle();
+
+        if (_gui.IsOpen)
+            _gui.Draw();
+    }
 }
